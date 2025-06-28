@@ -60,15 +60,25 @@ export class AuthService {
 
     // Serialize user for session
     passport.serializeUser((user: any, done: any) => {
-      done(null, user.id);
+      // Store only the essential user data as JSON string
+      const userData = {
+        id: user.id,
+        username: user.username,
+        discriminator: user.discriminator,
+        avatar: user.avatar
+      };
+      logger.info('Serializing user data:', userData);
+      done(null, JSON.stringify(userData));
     });
 
     // Deserialize user from session
-    passport.deserializeUser(async (id: string, done: any) => {
+    passport.deserializeUser(async (userDataString: string, done: any) => {
       try {
-        // In a real app, you might fetch user from database here
-        // For now, we'll return the user from session
-        done(null, { id } as DiscordUser);
+        logger.info('Deserializing user data string:', userDataString);
+        // Parse the JSON string back to object
+        const userData = JSON.parse(userDataString);
+        logger.info('Parsed user data:', userData);
+        done(null, userData);
       } catch (error) {
         logger.error('Error deserializing user:', error);
         done(error, null);

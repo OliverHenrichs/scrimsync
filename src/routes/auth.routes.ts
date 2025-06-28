@@ -168,6 +168,7 @@ export const createAuthRoutes = (): Router => {
   router.get('/user', (req, res) => {
     if (req.isAuthenticated()) {
       const user = req.user as any; // Type assertion for now
+      console.log('User data from session:', user);
       res.json({
         success: true,
         data: {

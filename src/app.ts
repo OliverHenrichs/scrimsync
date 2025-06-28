@@ -135,6 +135,9 @@ export class App {
   }
 
   private setupRoutes(): void {
+    // Serve static files from public directory
+    this.app.use(express.static('public'));
+
     // Health routes
     const healthController = new HealthController(this.discordService);
     this.app.use('/api/health', createHealthRoutes(healthController));

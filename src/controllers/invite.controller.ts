@@ -3,6 +3,7 @@ import { AuthenticatedRequest, ApiResponse, CreateInviteRequest } from '@/types'
 import { AppError } from '@/types';
 import InviteService from '@/services/invite.service';
 import { config } from '@/config';
+import { PermissionFlagsBits } from 'discord.js';
 
 export class InviteController {
   private inviteService: InviteService;
@@ -201,6 +202,60 @@ export class InviteController {
       success: true,
       message: 'Invite deleted successfully',
     });
+  };
+
+  public generateBotInvite = async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    try {
+      // Generate bot invite URL with minimal required permissions
+      const permissions = [
+        'ViewChannel',            // View channels
+        'SendMessages',           // Send messages
+        'ManageMessages',         // Manage messages
+        'EmbedLinks',             // Embed links
+        'AttachFiles',            // Attach files
+        'ReadMessageHistory',     // Read message history
+        'UseExternalEmojis',      // Use external emojis
+        'AddReactions',           // Add reactions
+      ];
+
+      // Calculate permission bits
+      const permissionBits = permissions.reduce((bits, permission) => {
+        const permissionBit = PermissionFlagsBits[permission as keyof typeof PermissionFlagsBits];
+        if (permissionBit) {
+          return bits | permissionBit;
+        }
+        return bits;
+      }, BigInt(0));
+
+      const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${config.discord.clientId}&permissions=${permissionBits.toString()}&scope=bot%20applications.commands`;
+
+      console.log('Generated bot invite URL:', inviteUrl);
+      console.log('Client ID:', config.discord.clientId);
+      console.log('Permission bits:', permissionBits.toString());
+
+      res.json({
+        success: true,
+        data: {
+          inviteUrl,
+          permissions,
+          clientId: config.discord.clientId,
+        },
+        message: 'Bot invite URL generated successfully',
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to generate bot invite URL',
+      });
+    }
   };
 }
 
