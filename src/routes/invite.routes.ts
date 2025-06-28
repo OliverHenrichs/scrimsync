@@ -16,7 +16,7 @@ export const createInviteRoutes = (inviteController: InviteController): Router =
       const nonce = crypto.randomBytes(16).toString('base64');
       
       // Read the HTML file from views directory
-      const htmlPath = join(__dirname, '..', 'views', 'bot-invite.html');
+      const htmlPath = join(__dirname, '..', '..', 'src', 'views', 'bot-invite.html');
       let html = readFileSync(htmlPath, 'utf-8');
       
       // Replace the placeholder with the actual nonce

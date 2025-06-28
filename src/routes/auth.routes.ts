@@ -15,7 +15,7 @@ export const createAuthRoutes = (): Router => {
       const nonce = crypto.randomBytes(16).toString('base64');
       
       // Read the HTML file from views directory
-      const htmlPath = join(__dirname, '..', 'views', 'login.html');
+      const htmlPath = join(__dirname, '..', '..', 'src', 'views', 'login.html');
       let html = readFileSync(htmlPath, 'utf-8');
       
       // Replace the placeholder with the actual nonce (if needed for future JS injection)
@@ -61,7 +61,7 @@ export const createAuthRoutes = (): Router => {
       if (err) {
         return res.status(500).json({ success: false, error: 'Logout failed' });
       }
-      res.redirect('/auth/');
+      return res.redirect('/auth/');
     });
   });
 

@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import { AuthenticatedRequest, ApiResponse, CreateInviteRequest } from '@/types';
+import { ApiResponse, CreateInviteRequest } from '@/types';
 import { AppError } from '@/types';
 import InviteService from '@/services/invite.service';
 import { config } from '@/config';
 import { PermissionFlagsBits } from 'discord.js';
+import { DiscordService } from '@/services/discord.service';
+import { logger } from '@/utils/logger';
 
 export class InviteController {
   private inviteService: InviteService;
@@ -13,28 +15,27 @@ export class InviteController {
   }
 
   public createInvite = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response<ApiResponse>
   ): Promise<void> => {
-    const { channelId, maxUses, maxAge, temporary, reason } = req.body as CreateInviteRequest;
     const { guildId } = req.params;
+    const { channelId, maxUses, maxAge, temporary, reason } = req.body as CreateInviteRequest;
 
-    if (!channelId) {
-      throw new AppError('Channel ID is required', 400);
-    }
-
-    if (!guildId) {
-      throw new AppError('Guild ID is required', 400);
+    if (!guildId || !channelId) {
+      throw new AppError('Guild ID and channel ID are required', 400);
     }
 
     if (!req.user) {
       throw new AppError('User not authenticated', 401);
     }
 
+    // Type assertion for user object
+    const user = req.user as { id: string; username: string; discriminator: string; avatar?: string };
+
     // Validate permissions
     const hasPermission = await this.inviteService.validateInvitePermissions(
       guildId,
-      req.user.id,
+      user.id,
       channelId
     );
 
@@ -121,7 +122,7 @@ export class InviteController {
   };
 
   public getGuildInvites = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response<ApiResponse>
   ): Promise<void> => {
     const { guildId } = req.params;
@@ -143,7 +144,7 @@ export class InviteController {
   };
 
   public checkBotStatus = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response<ApiResponse>
   ): Promise<void> => {
     const { guildId } = req.params;
@@ -179,7 +180,7 @@ export class InviteController {
   };
 
   public deleteInvite = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response<ApiResponse>
   ): Promise<void> => {
     const { code } = req.params;
@@ -205,7 +206,7 @@ export class InviteController {
   };
 
   public generateBotInvite = async (
-    req: AuthenticatedRequest,
+    req: Request,
     res: Response<ApiResponse>
   ): Promise<void> => {
     if (!req.user) {

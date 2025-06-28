@@ -49,18 +49,6 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   };
 }
 
-// Request types with passport session support
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar?: string;
-  };
-  logout?: (callback: (err: any) => void) => void;
-  isAuthenticated?: () => boolean;
-}
-
 // Error types
 export class AppError extends Error {
   public statusCode: number;

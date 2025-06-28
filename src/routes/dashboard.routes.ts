@@ -19,8 +19,8 @@ export const createDashboardRoutes = (): Router => {
       // Generate a unique nonce for this request
       const nonce = crypto.randomBytes(16).toString('base64');
       
-      // Read the HTML file from views directory
-      const htmlPath = join(__dirname, '..', 'views', 'dashboard.html');
+      // Read the HTML file from views directory (relative to project root)
+      const htmlPath = join(__dirname, '..', '..', 'src', 'views', 'dashboard.html');
       let html = readFileSync(htmlPath, 'utf-8');
       
       // Replace the placeholder with the actual nonce

@@ -1,42 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '@/types';
-import { AppError } from '@/types';
 
 // Discord OAuth authentication middleware
-export const authenticateUser = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const authReq = req as unknown as AuthenticatedRequest;
-  
-  if (!authReq.isAuthenticated || !authReq.isAuthenticated()) {
-    throw new AppError('Authentication required', 401);
+export const authenticateUser = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.redirect('/auth/');
   }
-
-  if (!authReq.user) {
-    throw new AppError('User not found in session', 401);
-  }
-
-  next();
 };
 
 export const requirePermission = (permission: string) => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const authReq = req as unknown as AuthenticatedRequest;
-    
-    if (!authReq.isAuthenticated || !authReq.isAuthenticated()) {
-      throw new AppError('Authentication required', 401);
+    if (!req.isAuthenticated()) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
     }
 
-    if (!authReq.user) {
-      throw new AppError('User not found in session', 401);
+    // For now, allow all authenticated users in development
+    // In production, implement proper permission checking
+    if (process.env.NODE_ENV === 'development') {
+      next();
+      return;
     }
 
-    // Add permission checking logic here
-    // For now, we'll allow all authenticated users
-    // In production, check against Discord permissions
-
-    next();
+    // TODO: Implement proper permission checking
+    res.status(403).json({ success: false, error: 'Insufficient permissions' });
   };
 }; 
