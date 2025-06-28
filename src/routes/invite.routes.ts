@@ -14,6 +14,13 @@ export const createInviteRoutes = (inviteController: InviteController): Router =
     asyncHandler(inviteController.createInvite)
   );
 
+  // Check bot status for a specific guild
+  router.get(
+    '/:guildId/status',
+    authenticateUser,
+    asyncHandler(inviteController.checkBotStatus)
+  );
+
   // Get a specific invite by code
   router.get(
     '/:code',

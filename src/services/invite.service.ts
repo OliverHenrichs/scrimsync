@@ -10,6 +10,15 @@ export class InviteService implements IInviteService {
     this.discordService = discordService;
   }
 
+  public async validateBotAccess(guildId: string): Promise<boolean> {
+    try {
+      return await this.discordService.isBotInGuild(guildId);
+    } catch (error) {
+      logger.error(`Error validating bot access to guild ${guildId}:`, error);
+      return false;
+    }
+  }
+
   public async createInvite(data: CreateInviteRequest): Promise<InviteData> {
     try {
       const inviteOptions: any = {};
@@ -39,9 +48,15 @@ export class InviteService implements IInviteService {
 
       logger.info(`Created invite ${inviteData.code} for channel ${data.channelId}`);
       return inviteData;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error creating invite:', error);
-      throw error;
+      
+      // Re-throw the error with the specific message from Discord service
+      if (error.message) {
+        throw new Error(error.message);
+      } else {
+        throw new Error('Failed to create invite due to an unknown error');
+      }
     }
   }
 

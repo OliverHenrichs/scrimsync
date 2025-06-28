@@ -117,9 +117,24 @@ export class DiscordService implements IDiscordService {
 
       logger.info(`Created invite ${invite.code} for channel ${channelId}`);
       return invite;
-    } catch (error) {
-      logger.error(`Failed to create invite for channel ${channelId}:`, error);
-      return null;
+    } catch (error: any) {
+      // Handle specific Discord API errors
+      if (error.code === 50001) {
+        logger.error(`Bot lacks access to channel ${channelId} - bot may have been kicked from the server`);
+        throw new Error('Bot does not have access to this server. The bot may have been kicked from the server or lacks the required permissions.');
+      } else if (error.code === 50013) {
+        logger.error(`Bot lacks permissions to create invites in channel ${channelId}`);
+        throw new Error('Bot does not have permission to create invites in this channel.');
+      } else if (error.code === 10003) {
+        logger.error(`Channel ${channelId} not found`);
+        throw new Error('Channel not found. The channel may have been deleted or the bot lacks access.');
+      } else if (error.code === 10004) {
+        logger.error(`Guild not found for channel ${channelId}`);
+        throw new Error('Server not found. The bot may have been kicked from the server.');
+      } else {
+        logger.error(`Failed to create invite for channel ${channelId}:`, error);
+        throw new Error(`Failed to create invite: ${error.message || 'Unknown error'}`);
+      }
     }
   }
 
@@ -162,6 +177,20 @@ export class DiscordService implements IDiscordService {
       logger.info('Discord service shutdown successfully');
     } catch (error) {
       logger.error('Error during Discord service shutdown:', error);
+    }
+  }
+
+  public async isBotInGuild(guildId: string): Promise<boolean> {
+    try {
+      const guild = await this.client.guilds.fetch(guildId);
+      return guild !== null;
+    } catch (error: any) {
+      if (error.code === 10004) {
+        // Guild not found - bot is not in this guild
+        return false;
+      }
+      logger.error(`Error checking if bot is in guild ${guildId}:`, error);
+      return false;
     }
   }
 }
