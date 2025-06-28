@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'public',
     emptyOutDir: false, // Don't clear the public directory
+    sourcemap: mode === 'development' ? 'inline' : false, // Source maps for development
+    minify: mode === 'production', // Only minify in production
     rollupOptions: {
       input: {
         dashboard: resolve(__dirname, 'src/client/dashboard.ts'),
@@ -24,4 +26,4 @@ export default defineConfig({
     port: 5173,
     cors: true,
   },
-}); 
+})); 

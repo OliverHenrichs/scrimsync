@@ -5,6 +5,12 @@ interface User {
   avatar?: string;
 }
 
+interface UserResponse {
+  success: boolean;
+  data: User;
+  error?: string;
+}
+
 interface BotStatusResponse {
   success: boolean;
   data?: {
@@ -53,8 +59,13 @@ class Dashboard {
         return;
       }
 
-      const user: User = await response.json();
-      this.displayUserInfo(user);
+      const userResponse: UserResponse = await response.json();
+      
+      if (userResponse.success && userResponse.data) {
+        this.displayUserInfo(userResponse.data);
+      } else {
+        throw new Error(userResponse.error || 'Failed to load user data');
+      }
     } catch (error) {
       console.error('Error loading user info:', error);
       this.userInfoElement.textContent = 'Error loading user information';
