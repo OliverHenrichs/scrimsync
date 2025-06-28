@@ -151,18 +151,13 @@ export class App {
 
     // Root endpoint
     this.app.get('/', (req, res) => {
-      res.json({
-        success: true,
-        message: 'ScrimSync Discord Bot API',
-        version: '1.0.0',
-        documentation: '/api/docs',
-        auth: {
-          login: '/auth/login',
-          logout: '/auth/logout',
-          user: '/auth/user',
-        },
-        dashboard: '/dashboard',
-      });
+      // If user is authenticated, redirect to dashboard
+      if (req.isAuthenticated()) {
+        return res.redirect('/dashboard');
+      }
+      
+      // If not authenticated, redirect to login page
+      res.redirect('/auth/');
     });
   }
 

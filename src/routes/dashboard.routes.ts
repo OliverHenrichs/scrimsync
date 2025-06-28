@@ -7,7 +7,11 @@ export const createDashboardRoutes = (): Router => {
 
   // Dashboard page - requires authentication
   router.get('/', (req, res, next) => {
-    authenticateUser(req as any, res, next);
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.redirect('/auth/');
+    }
+    next();
   }, (req, res) => {
     // Generate a unique nonce for this request
     const nonce = crypto.randomBytes(16).toString('base64');
