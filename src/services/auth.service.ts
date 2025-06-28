@@ -23,6 +23,12 @@ export class AuthService {
   }
 
   private setupPassport(): void {
+    // Check if required Discord OAuth config is available
+    if (!config.discord.clientSecret || !config.discord.callbackUrl) {
+      logger.warn('Discord OAuth not configured - clientSecret and callbackUrl are required');
+      return;
+    }
+
     // Discord OAuth Strategy
     passport.use(
       new DiscordStrategy(
@@ -53,7 +59,7 @@ export class AuthService {
     );
 
     // Serialize user for session
-    passport.serializeUser((user: DiscordUser, done: any) => {
+    passport.serializeUser((user: any, done: any) => {
       done(null, user.id);
     });
 
