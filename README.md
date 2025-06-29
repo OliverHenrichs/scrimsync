@@ -1,22 +1,25 @@
 # ScrimSync Discord Bot
 
-A Discord bot with a web dashboard for managing invites, built with TypeScript, Express, and Discord.js.
+A Discord bot with a web dashboard for managing invites and scrim lobbies, built with TypeScript, Express, and Discord.js.
 
 ## Features
 
-- 🤖 Discord bot for invite management
+- 🤖 Discord bot for invite management and scrim coordination
+- 🎮 Slash commands for creating and managing scrim lobbies
 - 🌐 Web dashboard with OAuth authentication
 - 🔐 Secure session management with Redis
 - 📊 Multi-server support
 - 🧪 Comprehensive testing setup
 - 🔒 Security best practices (CSP, rate limiting, etc.)
+- ⏰ Scheduled scrim support with time-based restrictions
+- 👥 Participant management with join/leave functionality
 
 ## Prerequisites
 
 - Node.js 18+ 
 - npm or yarn
 - Discord Bot Token
-- Redis (for persistent sessions)
+- Redis (for persistent sessions and lobby data)
 
 ## Installation
 
@@ -76,7 +79,7 @@ A Discord bot with a web dashboard for managing invites, built with TypeScript, 
    JWT_SECRET=your_jwt_secret_here
    SESSION_SECRET=your_session_secret_here
 
-   # Redis Configuration (for session storage)
+   # Redis Configuration (for session storage and lobby data)
    REDIS_URL=redis://localhost:6379
    REDIS_HOST=localhost
    REDIS_PORT=6379
@@ -100,8 +103,37 @@ A Discord bot with a web dashboard for managing invites, built with TypeScript, 
 3. **Invite the bot to your server**
    - Go to OAuth2 > URL Generator
    - Select scopes: `bot`, `applications.commands`
-   - Select permissions: `Manage Server`, `Create Invite`
+   - Select permissions: `Manage Server`, `Create Invite`, `Send Messages`, `Add Reactions`, `Use Slash Commands`
    - Use the generated URL to invite the bot
+
+## Usage
+
+### Discord Slash Commands
+
+The bot provides a `/scrim` slash command with the following options:
+
+- **title** (required): The name of the scrim/lobby
+- **time** (optional): When the scrim should start (format: YYYY-MM-DD HH:MM)
+- **max_players** (optional): Maximum number of players (2-50)
+
+Example:
+```
+/scrim title:"5v5 Ranked" time:2024-01-15 20:00 max_players:10
+```
+
+### Lobby Management
+
+Once a lobby is created, users can:
+- **Join/Leave**: Click the ✅/❌ buttons to join or leave the lobby
+- **Start**: The creator can start the lobby using the ▶️ button (only available after scheduled time if set)
+- **Cancel**: The creator can cancel the lobby using the ⏹️ button
+
+### Web Dashboard
+
+Access the web dashboard at `http://localhost:3000/dashboard` to:
+- Create lobbies with a user-friendly interface
+- View and manage existing lobbies
+- Monitor participant counts and lobby status
 
 ## Running the Application
 
@@ -123,21 +155,37 @@ npm test
 
 ## API Endpoints
 
+### Core Endpoints
 - `GET /` - API information
 - `GET /api/health/health` - Health check
 - `GET /auth/login` - Discord OAuth login
 - `GET /auth/logout` - Logout
 - `GET /auth/user` - Get current user
 - `GET /dashboard` - Dashboard (requires authentication)
+- `GET /dashboard/lobbies` - Lobby management dashboard (requires authentication)
+
+### Invite Management
 - `POST /api/invites` - Create invite (requires authentication)
+- `GET /api/invites` - Get guild invites (requires authentication)
+- `DELETE /api/invites/:code` - Delete invite (requires authentication)
 
-## Session Management
+### Lobby Management
+- `POST /api/lobbies` - Create lobby (requires authentication)
+- `GET /api/lobbies/:id` - Get specific lobby
+- `GET /api/lobbies/guild/:guildId` - Get all lobbies for a guild
+- `PUT /api/lobbies/:id` - Update lobby
+- `DELETE /api/lobbies/:id` - Delete lobby
+- `POST /api/lobbies/:id/participants` - Add participant to lobby
+- `DELETE /api/lobbies/:id/participants` - Remove participant from lobby
+- `POST /api/lobbies/:id/start` - Start lobby
+- `POST /api/lobbies/:id/cancel` - Cancel lobby
 
-The application uses Redis for persistent session storage, which means:
-- Sessions survive server restarts
-- Multiple server instances can share sessions
-- Sessions are automatically cleaned up after 24 hours
-- If Redis is unavailable, the app falls back to memory sessions
+## Data Persistence
+
+The application uses Redis for:
+- **Session Storage**: Persistent user sessions across server restarts
+- **Lobby Data**: All lobby information is stored in Redis with 7-day expiration
+- **Guild Mappings**: Efficient lookup of lobbies by guild ID
 
 ## Security Features
 
@@ -146,7 +194,7 @@ The application uses Redis for persistent session storage, which means:
 - **Secure Cookies** - HttpOnly, Secure, SameSite
 - **OAuth2 Authentication** - Secure Discord authentication
 - **Session Management** - Redis-based persistent sessions
-- **Input Validation** - Joi/Zod schema validation
+- **Input Validation** - Comprehensive validation for all inputs
 - **Error Handling** - Comprehensive error handling and logging
 
 ## Architecture
@@ -158,6 +206,10 @@ src/
 ├── middleware/      # Express middleware
 ├── routes/          # Route definitions
 ├── services/        # Business logic
+│   ├── discord.service.ts    # Discord bot and slash commands
+│   ├── lobby.service.ts      # Lobby management logic
+│   ├── redis.service.ts      # Redis connection and operations
+│   └── ...
 ├── types/           # TypeScript type definitions
 ├── utils/           # Utility functions
 └── app.ts          # Main application setup

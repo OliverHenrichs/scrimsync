@@ -35,5 +35,30 @@ export const createDashboardRoutes = (): Router => {
     }
   });
 
+  // Lobby dashboard page - requires authentication
+  router.get('/lobbies', (req, res, next) => {
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.redirect('/auth/');
+    }
+    next();
+  }, (req, res) => {
+    try {
+      // Generate a unique nonce for this request
+      const nonce = crypto.randomBytes(16).toString('base64');
+      
+      // Read the HTML file from public directory
+      const htmlPath = join(__dirname, '..', '..', 'public', 'lobby-dashboard.html');
+      let html = readFileSync(htmlPath, 'utf-8');
+      
+      // Set the nonce in the response headers for CSP
+      res.setHeader('Content-Security-Policy', `script-src 'self' 'nonce-${nonce}'`);
+      res.send(html);
+    } catch (error) {
+      console.error('Error serving lobby dashboard:', error);
+      res.status(500).send('Error loading lobby dashboard');
+    }
+  });
+
   return router;
 }; 

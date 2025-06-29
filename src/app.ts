@@ -12,13 +12,16 @@ import DiscordService from '@/services/discord.service';
 import InviteService from '@/services/invite.service';
 import AuthService from '@/services/auth.service';
 import RedisService from '@/services/redis.service';
+import LobbyService from '@/services/lobby.service';
 import { RedisSessionStore } from '@/services/redis-session.store';
 import InviteController from '@/controllers/invite.controller';
 import HealthController from '@/controllers/health.controller';
+import LobbyController from '@/controllers/lobby.controller';
 import { createInviteRoutes } from '@/routes/invite.routes';
 import { createHealthRoutes } from '@/routes/health.routes';
 import { createAuthRoutes } from '@/routes/auth.routes';
 import { createDashboardRoutes } from '@/routes/dashboard.routes';
+import { createLobbyRoutes } from '@/routes/lobby.routes';
 
 export class App {
   private app: express.Application;
@@ -26,14 +29,16 @@ export class App {
   private inviteService: InviteService;
   private authService: AuthService;
   private redisService: RedisService;
+  private lobbyService: LobbyService;
   private initialized = false;
 
   constructor() {
     this.app = express();
-    this.discordService = new DiscordService();
+    this.redisService = new RedisService();
+    this.lobbyService = new LobbyService(this.redisService);
+    this.discordService = new DiscordService(this.lobbyService);
     this.inviteService = new InviteService(this.discordService);
     this.authService = new AuthService();
-    this.redisService = new RedisService();
   }
 
   private async setupMiddleware(): Promise<void> {
@@ -149,6 +154,10 @@ export class App {
     const inviteController = new InviteController(this.inviteService);
     this.app.use('/api/invites', createInviteRoutes(inviteController));
 
+    // Lobby routes
+    const lobbyController = new LobbyController(this.lobbyService);
+    this.app.use('/api/lobbies', createLobbyRoutes(lobbyController));
+
     // Dashboard routes
     this.app.use('/dashboard', createDashboardRoutes());
 
@@ -203,9 +212,13 @@ export class App {
 
   public async shutdown(): Promise<void> {
     try {
+      // Shutdown Discord service
       await this.discordService.shutdown();
+      
+      // Shutdown Redis service
       await this.redisService.disconnect();
-      logger.info('Application shutdown successfully');
+      
+      logger.info('Application shutdown completed');
     } catch (error) {
       logger.error('Error during application shutdown:', error);
     }

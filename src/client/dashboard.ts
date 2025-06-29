@@ -14,9 +14,12 @@ interface UserResponse {
 interface BotStatusResponse {
   success: boolean;
   data?: {
-    isInGuild: boolean;
+    botInGuild: boolean;
     guildName?: string;
-    permissions?: string[];
+    guildId: string;
+    memberCount?: number;
+    icon?: string;
+    message?: string;
   };
   message?: string;
 }
@@ -110,7 +113,7 @@ class Dashboard {
       const data: BotStatusResponse = await response.json();
 
       if (data.success && data.data) {
-        if (data.data.isInGuild) {
+        if (data.data.botInGuild) {
           this.botStatusElement.textContent = '✅ Bot is in server';
           this.botStatusElement.style.background = '#28a745';
           this.botStatusElement.style.color = '#fff';
@@ -118,6 +121,7 @@ class Dashboard {
           this.showResult(`
             <h3>Bot Status: Active</h3>
             <p><strong>Server:</strong> ${data.data.guildName || 'Unknown'}</p>
+            <p><strong>Members:</strong> ${data.data.memberCount || 'Unknown'}</p>
             <p>The bot is successfully connected to this server and ready to use!</p>
           `, 'success');
         } else {

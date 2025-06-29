@@ -19,6 +19,24 @@ export class InviteService implements IInviteService {
     }
   }
 
+  public async getBotStatus(guildId: string): Promise<{
+    botInGuild: boolean;
+    guildName?: string;
+    guildId: string;
+    memberCount?: number;
+    icon?: string;
+  }> {
+    try {
+      return await this.discordService.getBotStatus(guildId);
+    } catch (error) {
+      logger.error(`Error getting bot status for guild ${guildId}:`, error);
+      return {
+        botInGuild: false,
+        guildId,
+      };
+    }
+  }
+
   public async createInvite(data: CreateInviteRequest): Promise<InviteData> {
     try {
       const inviteOptions: any = {};

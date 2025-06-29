@@ -158,14 +158,17 @@ export class InviteController {
     }
 
     try {
-      const botAccess = await this.inviteService.validateBotAccess(guildId);
+      const botStatus = await this.inviteService.getBotStatus(guildId);
       
       res.json({
         success: true,
         data: {
-          guildId,
-          botInGuild: botAccess,
-          message: botAccess 
+          guildId: botStatus.guildId,
+          botInGuild: botStatus.botInGuild,
+          guildName: botStatus.guildName,
+          memberCount: botStatus.memberCount,
+          icon: botStatus.icon,
+          message: botStatus.botInGuild 
             ? 'Bot is active in this server' 
             : 'Bot is not a member of this server'
         },
