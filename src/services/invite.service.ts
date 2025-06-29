@@ -37,6 +37,15 @@ export class InviteService implements IInviteService {
     }
   }
 
+  public async registerCommandsForGuild(guildId: string): Promise<boolean> {
+    try {
+      return await this.discordService.registerCommandsForGuild(guildId);
+    } catch (error) {
+      logger.error(`Error registering commands for guild ${guildId}:`, error);
+      return false;
+    }
+  }
+
   public async createInvite(data: CreateInviteRequest): Promise<InviteData> {
     try {
       const inviteOptions: any = {};

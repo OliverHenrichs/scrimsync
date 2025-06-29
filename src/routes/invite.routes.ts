@@ -46,6 +46,13 @@ export const createInviteRoutes = (inviteController: InviteController): Router =
     asyncHandler(inviteController.checkBotStatus)
   );
 
+  // Register slash commands for a specific guild
+  router.post(
+    '/:guildId/register-commands',
+    authenticateUser,
+    asyncHandler(inviteController.registerCommands)
+  );
+
   // Generate bot invite URL
   router.get(
     '/bot/invite',

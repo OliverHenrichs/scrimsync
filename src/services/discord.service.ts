@@ -65,6 +65,12 @@ export class DiscordService implements IDiscordService {
       }
     });
 
+    // Handle when bot joins a new guild
+    this.client.on(Events.GuildCreate, async (guild) => {
+      logger.info(`Bot joined guild: ${guild.name} (${guild.id})`);
+      await this.registerCommandsForGuild(guild.id);
+    });
+
     // Handle message reactions
     this.client.on(Events.MessageReactionAdd, this.handleReactionAdd.bind(this));
     this.client.on(Events.MessageReactionRemove, this.handleReactionRemove.bind(this));
@@ -98,8 +104,20 @@ export class DiscordService implements IDiscordService {
     // Register the command
     this.client.once('ready', async () => {
       try {
-        await this.client.application?.commands.set([scrimCommand]);
-        logger.info('Slash commands registered successfully');
+        // For development, register as guild commands (appear instantly)
+        // For production, you might want to use global commands
+        const guilds = this.client.guilds.cache;
+        
+        for (const [guildId, guild] of guilds) {
+          try {
+            await guild.commands.set([scrimCommand]);
+            logger.info(`Slash commands registered for guild: ${guild.name} (${guildId})`);
+          } catch (error) {
+            logger.error(`Failed to register commands for guild ${guild.name}:`, error);
+          }
+        }
+        
+        logger.info('Slash commands registration completed');
       } catch (error) {
         logger.error('Failed to register slash commands:', error);
       }
@@ -458,6 +476,47 @@ export class DiscordService implements IDiscordService {
       logger.info('Discord service shutdown successfully');
     } catch (error) {
       logger.error('Error during Discord service shutdown:', error);
+    }
+  }
+
+  public async registerCommandsForGuild(guildId: string): Promise<boolean> {
+    try {
+      const guild = await this.client.guilds.fetch(guildId);
+      if (!guild) {
+        logger.error(`Guild ${guildId} not found`);
+        return false;
+      }
+
+      const scrimCommand = new SlashCommandBuilder()
+        .setName('scrim')
+        .setDescription('Create a new scrim/lobby')
+        .addStringOption(option =>
+          option
+            .setName('title')
+            .setDescription('The title of the scrim')
+            .setRequired(true)
+        )
+        .addStringOption(option =>
+          option
+            .setName('time')
+            .setDescription('When the scrim should start (optional, format: YYYY-MM-DD HH:MM)')
+            .setRequired(false)
+        )
+        .addIntegerOption(option =>
+          option
+            .setName('max_players')
+            .setDescription('Maximum number of players (optional)')
+            .setRequired(false)
+            .setMinValue(2)
+            .setMaxValue(50)
+        );
+
+      await guild.commands.set([scrimCommand]);
+      logger.info(`Slash commands registered for guild: ${guild.name} (${guildId})`);
+      return true;
+    } catch (error) {
+      logger.error(`Failed to register commands for guild ${guildId}:`, error);
+      return false;
     }
   }
 

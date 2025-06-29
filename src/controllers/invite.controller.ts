@@ -208,6 +208,44 @@ export class InviteController {
     });
   };
 
+  public registerCommands = async (
+    req: Request,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
+    const { guildId } = req.params;
+
+    if (!guildId) {
+      throw new AppError('Guild ID is required', 400);
+    }
+
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    try {
+      const success = await this.inviteService.registerCommandsForGuild(guildId);
+      
+      if (success) {
+        res.json({
+          success: true,
+          message: 'Slash commands registered successfully',
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Registration Failed',
+          message: 'Failed to register slash commands',
+        });
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to register commands',
+      });
+    }
+  };
+
   public generateBotInvite = async (
     req: Request,
     res: Response<ApiResponse>
